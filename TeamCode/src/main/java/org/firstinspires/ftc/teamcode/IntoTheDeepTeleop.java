@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -18,6 +19,7 @@ public class IntoTheDeepTeleop extends OpMode {
     private Servo basketServo, intakePivotServo;
     private CRServo intakeServoLeft, intakeServoRight;
     private TouchSensor intakeTouchSensor;
+    private TouchSensor magneticLimitSwitch;
     boolean liftHoldingTrigger = false; // flag to determine if lift trigger is being held
     boolean posUpdated = true; // flag to determine if lift position has been updated
     int liftPosTier = 0; // 0 = bottom, 1 = middle, 2 = top
@@ -63,6 +65,26 @@ public class IntoTheDeepTeleop extends OpMode {
         intakeServoRight = hardwareMap.get(CRServo.class, "intakeServoRight");
         intakeTouchSensor = hardwareMap.get(TouchSensor.class, "intakeTouchSensor");
 
+        // magnetic limit switch
+        magneticLimitSwitch = hardwareMap.get(TouchSensor.class, "magneticLimitSwitch");
+
+        leftLiftMotor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        rightLiftMotor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+
+        // initialize basket servo to 0
+        basketServo.setPosition(0.0);
+
+        // initialize intake pivot servo to 0
+        intakePivotServo.setPosition(0.0);
+
+        while (!magneticLimitSwitch.isPressed()) {
+            leftLiftMotor.setPower(.5);
+            rightLiftMotor.setPower(-.5);
+        }
+
+        leftLiftMotor.setPower(0);
+        rightLiftMotor.setPower(0);
+
         // Set lift motors to use encoders
         leftLiftMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         rightLiftMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
@@ -75,12 +97,6 @@ public class IntoTheDeepTeleop extends OpMode {
 
         // Set all motors to zero power
         setMotorPower(0, 0, 0, 0);
-
-        // initialize basket servo to 0
-        basketServo.setPosition(0.0);
-
-        // initialize intake pivot servo to 0
-        intakePivotServo.setPosition(0.0);
     }
 
     @Override
