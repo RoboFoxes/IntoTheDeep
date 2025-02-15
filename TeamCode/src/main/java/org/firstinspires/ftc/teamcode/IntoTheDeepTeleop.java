@@ -7,8 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
-
-
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp(name = "IntoTheDeepTeleop", group = "Drive")
 public class IntoTheDeepTeleop extends OpMode {
@@ -20,6 +19,7 @@ public class IntoTheDeepTeleop extends OpMode {
     private CRServo intakeServoLeft, intakeServoRight;
     private TouchSensor intakeTouchSensor;
     private TouchSensor magneticLimitSwitch;
+    private ElapsedTime sleepTimer = new ElapsedTime();
     boolean liftHoldingTrigger = false; // flag to determine if lift trigger is being held
     boolean posUpdated = true; // flag to determine if lift position has been updated
     int liftPosTier = 0; // 0 = bottom, 1 = middle, 2 = top
@@ -67,7 +67,10 @@ public class IntoTheDeepTeleop extends OpMode {
 
         // magnetic limit switch
         magneticLimitSwitch = hardwareMap.get(TouchSensor.class, "magneticLimitSwitch");
+    }
 
+    @Override
+    public void start() {
         leftLiftMotor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         rightLiftMotor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
 
@@ -76,6 +79,11 @@ public class IntoTheDeepTeleop extends OpMode {
 
         // initialize intake pivot servo to 0
         intakePivotServo.setPosition(0.0);
+
+        sleepTimer.reset();
+        while (sleepTimer.seconds() < 1) {
+
+        }
 
         while (!magneticLimitSwitch.isPressed()) {
             leftLiftMotor.setPower(.5);
@@ -135,9 +143,6 @@ public class IntoTheDeepTeleop extends OpMode {
         frontRightPower /= Math.max(1.0, Math.abs(frontRightPower));
         backLeftPower /= Math.max(1.0, Math.abs(backLeftPower));
         backRightPower /= Math.max(1.0, Math.abs(backRightPower));
-
-
-
 
         // Set motor power
         setMotorPower(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
