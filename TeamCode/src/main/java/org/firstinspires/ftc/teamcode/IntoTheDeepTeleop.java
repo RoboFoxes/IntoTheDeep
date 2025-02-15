@@ -7,9 +7,11 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 
+
+
 @TeleOp(name = "IntoTheDeepTeleop", group = "Drive")
 public class IntoTheDeepTeleop extends OpMode {
-    // Declare motors
+    // Declare thingies
     private DcMotorEx frontLeft, frontRight, backLeft, backRight;
     private DcMotorEx leftLiftMotor, rightLiftMotor;
     private DcMotorEx intakeSlidesMotor;
@@ -83,10 +85,28 @@ public class IntoTheDeepTeleop extends OpMode {
 
     @Override
     public void loop() {
-        // Get joystick values (replace gamepad with your controller source)
-        double y = -gamepad1.left_stick_y; // Forward/backward
-        double x = gamepad1.left_stick_x * 1.1; // Strafe
+        // Get joystick values
+        double boost = gamepad1.right_trigger / 2; // Boost
+        double y = 0.0;
+        double x = 0.0;
+
+        if (gamepad1.dpad_up){
+            y = 0.5;
+        }else if (gamepad1.dpad_down){
+            y = -0.5;
+        }else if (gamepad1.dpad_left){
+            x = -0.5;
+        }else if (gamepad1.dpad_right){
+            x = 0.5;
+        }else {
+            y = -gamepad1.left_stick_y / 2; // Forward/backward
+            x = gamepad1.left_stick_x / 2; // Strafe
+        }
+
         double rotation = gamepad1.right_stick_x; // Rotate
+        y += y * boost;
+        x += x * boost;
+
 
         // Mecanum drive calculations
         double frontLeftPower = (y + x + rotation);
@@ -95,11 +115,13 @@ public class IntoTheDeepTeleop extends OpMode {
         double backRightPower = (y + x - rotation);
 
         // Normalize the power values to be within -1 and 1
-        double maxPower = Math.max(1.0, Math.abs(frontLeftPower));
-        frontLeftPower /= maxPower;
-        frontRightPower /= maxPower;
-        backLeftPower /= maxPower;
-        backRightPower /= maxPower;
+        frontLeftPower /= Math.max(1.0, Math.abs(frontLeftPower));
+        frontRightPower /= Math.max(1.0, Math.abs(frontRightPower));
+        backLeftPower /= Math.max(1.0, Math.abs(backLeftPower));
+        backRightPower /= Math.max(1.0, Math.abs(backRightPower));
+
+
+
 
         // Set motor power
         setMotorPower(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
@@ -203,8 +225,8 @@ public class IntoTheDeepTeleop extends OpMode {
 
     public void intake() {
 
-        // intake is full, stop running servos and retract to deposit in basket
-        if (intakeTouchSensor.isPressed() && !intakeFull) {
+        // intake is full or override button (a) has been pressed, stop running servos and retract to deposit in basket
+        if ((intakeTouchSensor.isPressed() || gamepad2.a) && !intakeFull) {
             intakeFull = true;
 
             runIntakeMotors(IntakeMode.STOP);
@@ -262,7 +284,7 @@ public class IntoTheDeepTeleop extends OpMode {
 
     public void horizontalSlides() {
         if (!isRetracting) {
-            if (gamepad2.dpad_up && (intakeSlidesMotor.getCurrentPosition() >= -950)) {
+            if (gamepad2.dpad_up && (intakeSlidesMotor.getCurrentPosition() >= -930)) { // max extension -930 ticks
                 intakeSlidesMotor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
                 intakeSlidesMotor.setPower(-0.8);
             } else if (gamepad2.dpad_down && (intakeSlidesMotor.getCurrentPosition() <= 0)) {
